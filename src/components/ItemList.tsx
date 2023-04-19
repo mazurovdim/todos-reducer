@@ -12,6 +12,7 @@ function list(props:ItemListProps){
                 <li key={item.id}>
                   <input type="checkbox" checked={item.done} onChange={() => {
                     props.dispatch({type:ActionTodoType.TOGGLEDONE, payload:item})
+                    props.dispatch({type:ActionTodoType.FILTERTOGGLE, payload:item})
                   }}/>
                   {!item.done? item.title : <s>{item.title}</s>}
                   ---

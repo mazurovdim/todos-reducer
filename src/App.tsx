@@ -10,11 +10,12 @@ export interface ITodoItem{
 export enum ActionTodoType{
   ADDITEM = "ADDITEM",
   DELETEITEM = "DELETEITEM",
-  ADDNEXTITEM = "ADDNEXTITEM",
-  TOGGLEDONE = "TOGGLEDONE"
+  ADDNEWITEM = "ADDNEWITEM",
+  TOGGLEDONE = "TOGGLEDONE",
+  FILTERTOGGLE = "FILTERTOGGLE"
 }
 
-type ActionItem = {
+type ActionNewItemType = {
   type: ActionTodoType
   payload: ITodoItem
 }
@@ -24,20 +25,26 @@ type ActionAddItem = {
   payload: string
 }
 
-export type Action = ActionItem | ActionAddItem 
+export type Action = ActionNewItemType | ActionAddItem
 
 export type State = {
-  newItem?: string,
-  todos: ITodoItem[]
+  newItem?: string
+  todos: ITodoItem[],
+  filteredTodos:{
+    active:ITodoItem[],
+    completed:ITodoItem[]
+  }
 }
 
 function reducer(state:State, action:Action):State {
-  const {type, payload} = action
-  switch(type){
-    case ActionTodoType.ADDNEXTITEM: {
-      if (typeof payload === 'string'){
-          return {...state, newItem:payload}
-      }
+  const { type, payload } = action
+  
+  switch(action.type){
+    case ActionTodoType.ADDNEWITEM: {
+        if (typeof action.payload === 'string'){
+            return {...state, newItem:payload}
+        }
+
     }
     case ActionTodoType.ADDITEM: {
       if(typeof payload === 'string'){
@@ -45,21 +52,46 @@ function reducer(state:State, action:Action):State {
               id:state.todos.length + 1,
               title:payload,
               done:false
+            }],
+            filteredTodos:{...state.filteredTodos, active:[...state.filteredTodos.active,{
+              id:state.todos.length + 1,
+              title:payload,
+              done:false
             }]}
+          }
       }
   }
     case ActionTodoType.DELETEITEM: {
       if (typeof payload === 'object'){
-        return {...state, todos:state.todos.filter(item => item !== payload)}
+        return {
+          ...state, 
+          todos:state.todos.filter(item => item !== payload),
+          filteredTodos:{
+            active:state.filteredTodos.active.filter(item => item !== payload),
+            completed:state.filteredTodos.completed.filter(item => item !== payload)
+            }
+        }
       }  
     }
 
     case ActionTodoType.TOGGLEDONE: {
       if (typeof payload === 'object'){
-            return {...state,todos:state.todos.map(item => item !== payload? item : {...item, done:!payload.done})}
+            return {
+              ...state,
+              todos:state.todos.map(item => item !== payload? item : {...item, done:!payload.done},
+              )}
         }
       }
-
+    case ActionTodoType.FILTERTOGGLE: {
+      if (typeof payload === 'object'){
+        return {
+          ...state, 
+          filteredTodos:{
+            active: state.todos.filter(item => item.done === false),
+            completed: state.todos.filter(item => item.done === true)}
+        }
+      }
+    }    
     default:return state
   }
 }
@@ -69,57 +101,58 @@ function App() {
 const initialState:State = {
   todos:[],
   newItem: '',
+  filteredTodos:{
+    active:[],
+    completed:[]
+  }
   }
 
 const [state, dispatch] = useReducer(reducer, initialState)  
 
-
-
-  function showItems(filter:string){
-    switch(filter){
-      case 'All':{
-        setFilteredItems([...state.todos])
-        break;
-      }
-      case 'Active':{
-        setFilteredItems(state.todos.filter(item => item.done === false))
-        break;
-      }
-      case 'Completed':{
-        setFilteredItems(state.todos.filter(item => item.done === true))
-        break;
-      }
-    }
-  }
-
-const [filteredItems, setFilteredItems] = useState(state.todos)
   return (
     <>
       <h1>text</h1>
-      <input type="text" value={state.newItem} onChange={e => {
-        dispatch({type:ActionTodoType.ADDNEXTITEM, payload:e.target.value})
+      <input type="text" value={state.newItem}
+      onChange={e => {
+        dispatch({type:ActionTodoType.ADDNEWITEM, payload:e.target.value})
       }}/>
       <button onClick={() => {
         if(state.newItem){
           dispatch({type:ActionTodoType.ADDITEM, payload:state.newItem})
-          dispatch({type:ActionTodoType.ADDNEXTITEM, payload:''})
+          dispatch({type:ActionTodoType.ADDNEWITEM, payload:''})
         }
       }}>Add</button>
 
-      <ItemList dispatch={dispatch} itemList={filteredItems}/>
+      <ItemList dispatch={dispatch} itemList={state.todos}/>
 
+      <h2>ACTIVE</h2>
+      <ul>
+        {
+          state.filteredTodos.active.map((item, i) => (
+            <li key={i}>{item.title}</li>
+          ))
+        }
+      </ul>
+      <h2>COMPLITED</h2>
+      <ul>
+        {
+          state.filteredTodos.completed.map((item, i) => (
+            <li key={i}>{item.title}</li>
+          ))
+        }
+      </ul>
         <label htmlFor="All">
-          <input type="radio" name='filterList' value='All' onChange={(e) => showItems(e.target.value)}/>
+          <input type="radio" name='filterList' value='All'  />
           All
         </label>
 
         <label htmlFor="Active">
-          <input type="radio" name='filterList' value='Active' onChange={(e) => showItems(e.target.value)}/>
+          <input type="radio" name='filterList' value='Active' />
           Active
         </label>
 
         <label htmlFor="Completed">
-          <input type="radio" name='filterList' value='Completed' onChange={(e) => showItems(e.target.value)}/>
+          <input type="radio" name='filterList' value='Completed' />
           Completed
         </label>
           
