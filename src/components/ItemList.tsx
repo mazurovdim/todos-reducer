@@ -1,35 +1,27 @@
-import { Action, ActionTodoType, ITodoItem, State } from "../App"
+import { ITodoItem } from "../types"
 
 interface ItemListProps{
-    itemList:ITodoItem[] | undefined
-    dispatch:React.Dispatch<Action>
+    itemList: ITodoItem[]
+    handleDelete: (id:number) => void
+    handleComplete: (id:number) => void
 }
 
-function list(props:ItemListProps){
+export default function ItemList(props:ItemListProps) {
     if(props.itemList){
-        return(
-            props.itemList.map((item) => (
-                <li key={item.id}>
-                  <input type="checkbox" checked={item.done} onChange={() => {
-                    props.dispatch({type:ActionTodoType.TOGGLEDONE, payload:item})
-                  }}/>
-                  {!item.done? item.title : <s>{item.title}</s>}
-                  ---
-                  {item.id}
-                  <button onClick={() =>{
-                    props.dispatch({type:ActionTodoType.DELETEITEM, payload:item})
-                  }}>Удалить</button>
-                </li>
-              ))
-        )
-    }
-}
-
-
-export default function ItemList(props:ItemListProps){
-    return(
-        <ul>
-        {list(props)}
-      </ul>
-    )
+        return <>{
+          props.itemList.map((item) => (
+                  <li key={item.id}>
+                    <input type="checkbox" checked={item.done} onChange={() => {
+                      props.handleComplete(item.id)
+                    }}/>
+                    {!item.done? item.title : <s>{item.title}</s>}
+                    ---
+                    {item.id}
+                    <button onClick={() =>{
+                      props.handleDelete(item.id)
+                    }}>Удалить</button>
+                  </li>
+                ))
+        }</>
+    }else return null
 }
